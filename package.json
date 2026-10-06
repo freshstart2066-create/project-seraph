@@ -1,18 +1,18 @@
 {
-  "name": "project-seraph",
+  "name": "heliosc2",
   "private": true,
   "version": "2.0.0",
   "description": "Project Seraph — Sovereign Multi-Domain C4ISR & Autonomous Tactical Air/Missile Defense Command Platform. Real-time 3D planetary intelligence, kinetic ballistic/hypersonic trajectory prediction, WTA, and on-device neural voice.",
   "type": "module",
   "license": "MIT",
-  "author": "BIGFERRY999",
-  "homepage": "https://github.com/BIGFERRY999/project-seraph#readme",
+  "author": "freshstart2066-create",
+  "homepage": "https://github.com/freshstart2066-create/heliosc2#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/BIGFERRY999/project-seraph.git"
+    "url": "https://github.com/freshstart2066-create/heliosc2.git"
   },
   "bugs": {
-    "url": "https://github.com/BIGFERRY999/project-seraph/issues"
+    "url": "https://github.com/freshstart2066-create/heliosc2/issues"
   },
   "engines": {
     "node": ">=24.14.0 <25 || >=26 <27"
