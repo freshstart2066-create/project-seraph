@@ -30,7 +30,7 @@ Engineered for strategic air defense commands, joint operations centers, and adv
 * **Autonomous Battle Management (WTA)**: Solves the NP-hard Weapons-to-Target Assignment problem in milliseconds, calculating single-shot and dual-salvo Kill Probability ($P_k$) across integrated air defense batteries (Patriot PAC-3, Aegis SM-6, S-400, Arrow-3, Iron Dome).
 * **High-Fidelity Sensor Modeling**: Implements $4/3$ Earth atmospheric refraction radar horizons and 3D raycasted terrain elevation masking, identifying low-altitude nap-of-the-earth (NOE) cruise missile ingress corridors.
 * **Space Domain Awareness (SDA)**: Projects optical, SAR, and ELINT reconnaissance satellite ground swath cones over strategic installations and tracks co-orbital anti-satellite (ASAT) proximity conjunctions ($<50\text{ km}$).
-* **100% Air-Gapped & On-Device Voice C2**: Operates completely local speech recognition and low-latency neural OmniVoice synthesis—zero external audio streaming, zero cloud API reliance, zero telemetry leakage.
+* **100% Air-Gapped & On-Device Voice C2**: Operates local speech recognition and low-latency neural OmniVoice synthesis with secure key provenance, configurable cloud proxies (OpenAI Realtime, Cesium Ion, Google Maps), and zero unauthorized telemetry leakage.
 
 ---
 
