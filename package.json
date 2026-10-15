@@ -1,6 +1,5 @@
 {
   "name": "project-seraph",
-  "private": true,
   "version": "2.0.0",
   "description": "Project Seraph — Sovereign Multi-Domain C4ISR & Autonomous Tactical Air/Missile Defense Command Platform. Real-time 3D planetary intelligence, kinetic ballistic/hypersonic trajectory prediction, WTA, and on-device neural voice.",
   "type": "module",

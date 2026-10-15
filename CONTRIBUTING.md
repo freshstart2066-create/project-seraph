@@ -1,14 +1,14 @@
-# Contributing to Helios C2
+# Contributing to Project Seraph
 
-Helios C2 is an open foundation for multi-domain spatial intelligence and planetary defense in the browser.
+Project Seraph is an open foundation for multi-domain spatial intelligence and planetary defense in the browser.
 
 ## Getting set up
 
 Use Node.js 24.14.x or 26.x.
 
 ```bash
-git clone https://github.com/freshstart2066-create/heliosc2.git
-cd heliosc2
+git clone https://github.com/freshstart2066-create/project-seraph.git
+cd project-seraph
 nvm install 24.14.0
 nvm use 24.14.0
 npm install

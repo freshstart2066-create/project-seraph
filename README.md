@@ -177,10 +177,10 @@ Press <kbd>V</kbd> or click the microphone indicator to issue commands hands-fre
 ### 2. Clone & Install Dependencies
 ```bash
 # Clone the repository
-git clone https://github.com/freshstart2066-create/heliosc2.git
+git clone https://github.com/freshstart2066-create/project-seraph.git
 
 # Enter project directory
-cd heliosc2
+cd project-seraph
 
 # Install frontend and middleware dependencies
 npm install
