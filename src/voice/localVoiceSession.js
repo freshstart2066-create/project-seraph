@@ -362,9 +362,44 @@ export function matchTacticalIntent(rawText) {
   };
 }
 
+let activeTacticalVoiceAudio = null;
+
+export function stopTacticalVoiceAudio() {
+  if (activeTacticalVoiceAudio) {
+    try {
+      activeTacticalVoiceAudio.pause();
+      activeTacticalVoiceAudio.currentTime = 0;
+    } catch {}
+    activeTacticalVoiceAudio = null;
+  }
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {}
+  }
+}
+
 /** Synthesize and play voice acknowledgment using on-device OmniVoice / local server */
 export async function playTacticalVoiceAck(text, gender = 'female') {
   if (!text) return;
+
+  // Cancel prior speech from SITREP or previous ack so audio engines never overlap
+  try {
+    window.__tacticalSitrep?.stopBriefing?.();
+  } catch {}
+  stopTacticalVoiceAudio();
+
+  // If cloud WebRTC audio element is lingering, ensure it does not conflict
+  if (typeof document !== 'undefined') {
+    document
+      .querySelectorAll('audio[data-gev-realtime-audio="true"]')
+      .forEach((el) => {
+        try {
+          el.pause();
+        } catch {}
+      });
+  }
+
   try {
     tacticalSound.playCommsOpen?.(true);
   } catch {}
@@ -383,7 +418,10 @@ export async function playTacticalVoiceAck(text, gender = 'female') {
         const blob = await resp.blob();
         const audioUrl = URL.createObjectURL(blob);
         const audio = new Audio(audioUrl);
+        audio.dataset.seraphAudio = 'tactical-voice';
+        activeTacticalVoiceAudio = audio;
         audio.onended = () => {
+          if (activeTacticalVoiceAudio === audio) activeTacticalVoiceAudio = null;
           URL.revokeObjectURL(audioUrl);
           try {
             tacticalSound.playCommsClose?.(true);

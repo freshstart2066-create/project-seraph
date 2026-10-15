@@ -24,10 +24,19 @@ export function bindApplicationShortcuts({
   actions,
 }) {
   const onKeyDown = (event) => {
+    if (event.defaultPrevented) return;
     const isFormControl =
       event.target?.matches?.('select, input, textarea') ||
       event.target === searchInput;
     if (isFormControl && event.key !== 'Escape') return;
+
+    // When running in Project Seraph C4ISR mode, tactical battle management
+    // owns 1-5 (DEFCON), V (Voice C2), C (CRT Scanline Shader), T (FLIR), N (NVG).
+    if (typeof window !== 'undefined' && window.ProjectSeraph) {
+      if (['1', '2', '3', '4', '5'].includes(event.key)) return;
+      const key = event.key.toLowerCase();
+      if (key === 'v' || key === 'c' || key === 't' || key === 'n') return;
+    }
 
     if (STYLE_KEYS[event.key]) actions.setStyle(STYLE_KEYS[event.key]);
     if (event.key === 'Escape') actions.dismissSearch();

@@ -12,7 +12,6 @@ import { tacticalVectoring } from './tacticalVectoring.js';
 import { milStdSymbology } from './layers/milStdSymbology.js';
 import * as Cesium from 'cesium';
 import { cotLayer } from './layers/cotLayer.js';
-import { createVoiceControl } from './voice/control.js';
 import { ballisticPredictor } from './layers/ballisticPredictor.js';
 import { tacticalWta } from './tacticalWta.js';
 import { terrainMasking } from './layers/terrainMasking.js';
@@ -114,14 +113,7 @@ if (typeof window !== 'undefined') {
  * Does NOT wait for asynchronous 3D globe / WebGL bootstrap to complete.
  */
 function initSeraphInteractions() {
-  // 1. Ensure Voice Control reticle & button is rendered in the command dock immediately
-  try {
-    createVoiceControl({ reset: false });
-  } catch (err) {
-    console.warn('[Main] Voice control early render notice:', err);
-  }
-
-  // 2. Bind AI SITREP Briefing Button
+  // 1. Bind AI SITREP Briefing Button
   const sitrepBtn = document.getElementById('tactical-sitrep-btn');
   if (sitrepBtn && !sitrepBtn.dataset.bound) {
     sitrepBtn.dataset.bound = 'true';
@@ -131,7 +123,7 @@ function initSeraphInteractions() {
     });
   }
 
-  // 3. Bind Tactical Audio Switcher
+  // 2. Bind Tactical Audio Switcher
   const audioBtn = document.getElementById('tactical-audio-btn');
   if (audioBtn && !audioBtn.dataset.bound) {
     audioBtn.dataset.bound = 'true';
@@ -147,7 +139,7 @@ function initSeraphInteractions() {
     });
   }
 
-  // 4. Bind Theme Switcher (Day/Night)
+  // 3. Bind Theme Switcher (Day/Night)
   const themeBtn = document.getElementById('theme-toggle-btn');
   const themeIcon = document.getElementById('theme-toggle-icon');
   if (themeBtn && !themeBtn.dataset.bound) {
@@ -169,7 +161,7 @@ function initSeraphInteractions() {
     });
   }
 
-  // 5. Interactive DEFCON Status Inspection
+  // 4. Interactive DEFCON Status Inspection
   const defconIndicator = document.getElementById('defcon-indicator');
   if (defconIndicator && !defconIndicator.dataset.bound) {
     defconIndicator.dataset.bound = 'true';
@@ -187,42 +179,7 @@ function initSeraphInteractions() {
     });
   }
 
-  // 6. Safe immediate fallback toggle handling for Location Bar and Visual Presets
-  const locToggle = document.getElementById('location-bar-toggle');
-  const locBar = document.getElementById('location-bar');
-  if (locToggle && locBar && !locToggle.dataset.boundFallback) {
-    locToggle.dataset.boundFallback = 'true';
-    locToggle.addEventListener('click', () => {
-      setTimeout(() => {
-        if (
-          locToggle.getAttribute('aria-expanded') === 'false' &&
-          locBar.classList.contains('collapsed')
-        ) {
-          locBar.classList.remove('collapsed');
-          locToggle.setAttribute('aria-expanded', 'true');
-        }
-      }, 50);
-    });
-  }
-
-  const presetToggle = document.getElementById('control-panel-toggle');
-  const controlPanel = document.getElementById('control-panel');
-  if (presetToggle && controlPanel && !presetToggle.dataset.boundFallback) {
-    presetToggle.dataset.boundFallback = 'true';
-    presetToggle.addEventListener('click', () => {
-      setTimeout(() => {
-        if (
-          presetToggle.getAttribute('aria-expanded') === 'false' &&
-          controlPanel.classList.contains('collapsed')
-        ) {
-          controlPanel.classList.remove('collapsed');
-          presetToggle.setAttribute('aria-expanded', 'true');
-        }
-      }, 50);
-    });
-  }
-
-  // 7. Loading screen progress & smooth auto-dismissal
+  // 5. Loading screen progress & smooth auto-dismissal
   const loadingScreen = document.getElementById('loading-screen');
   const progressBar = document.getElementById('loader-progress-bar');
   const substatusEl = document.getElementById('loader-substatus');
@@ -275,7 +232,9 @@ function initSeraphInteractions() {
     const viewer = application.getComponents()?.scene?.viewer;
 
     // Tactical Recon Tour Toggle (M)
-    if (key === 'm') {
+    if (key === 'm' && !event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
       tacticalTour.toggle();
       return;
     }
@@ -283,11 +242,15 @@ function initSeraphInteractions() {
     if (event.key === 'Escape') {
       tacticalVectoring.clear();
       if (tacticalTour.isRunning) {
+        event.preventDefault();
+        event.stopPropagation();
         tacticalTour.stop();
         return;
       }
       const loading = document.getElementById('loading-screen');
       if (loading && !loading.classList.contains('hidden')) {
+        event.preventDefault();
+        event.stopPropagation();
         loading.classList.add('hidden');
         return;
       }
@@ -295,6 +258,8 @@ function initSeraphInteractions() {
 
     // DEFCON Operational Readiness State [1] through [5]
     if (['1', '2', '3', '4', '5'].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
       const level = Number.parseInt(event.key, 10);
       const def = threatMatrix.setDefcon(level);
       showToast(
@@ -307,6 +272,7 @@ function initSeraphInteractions() {
     // AI Operational SITREP Briefing [Space] or [S]
     if (event.code === 'Space' || event.key === ' ' || key === 's') {
       event.preventDefault();
+      event.stopPropagation();
       tacticalSitrep.deliverBriefing();
       showToast('AI SITREP // TACTICAL INTELLIGENCE BRIEFING ACTIVE [Space/S]');
       return;
@@ -314,6 +280,8 @@ function initSeraphInteractions() {
 
     // Toggle Operator Voice C2 Session (Local OmniVoice) [V]
     if (key === 'v' && !event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
       const voiceBtn = document.getElementById('gev-voice-button');
       if (voiceBtn) {
         voiceBtn.click();
@@ -333,12 +301,16 @@ function initSeraphInteractions() {
 
     // Toggle FLIR Thermal Multi-Spectral Post-Processing Shader [T]
     if (key === 't' && !event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
       toggleShader('thermal', 'FLIR THERMAL [T]');
       return;
     }
 
     // Camera Tilt (Shift+T)
     if (event.key === 'T' || (key === 't' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const tiltBtn = document.getElementById('tilt-map-view');
       if (tiltBtn) {
         tiltBtn.click();
@@ -354,12 +326,16 @@ function initSeraphInteractions() {
 
     // Toggle NVG Night Vision Phosphor Shader [N]
     if (key === 'n' && !event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
       toggleShader('surveillance', 'NVG NIGHT VISION PHOSPHOR [N]');
       return;
     }
 
     // Reset North (Shift+N)
     if (event.key === 'N' || (key === 'n' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const northBtn = document.getElementById('north-up-view');
       if (northBtn) {
         northBtn.click();
@@ -370,12 +346,16 @@ function initSeraphInteractions() {
 
     // Toggle Tactical CRT Scanline Post-Processing Shader [C]
     if (key === 'c' && !event.shiftKey) {
+      event.preventDefault();
+      event.stopPropagation();
       toggleShader('retro', 'TACTICAL CRT SCANLINES [C]');
       return;
     }
 
     // Space Domain Awareness - Satellite Recon Cones (Shift+C)
     if (event.key === 'C' || (key === 'c' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const active = satelliteCones.toggle(viewer);
       showToast(
         active
@@ -388,6 +368,8 @@ function initSeraphInteractions() {
 
     // Reset Globe (G)
     if (key === 'g') {
+      event.preventDefault();
+      event.stopPropagation();
       const globeBtn = document.getElementById('reset-globe-view');
       if (globeBtn) {
         globeBtn.click();
@@ -398,6 +380,8 @@ function initSeraphInteractions() {
 
     // Location Tray Toggle (L)
     if (key === 'l') {
+      event.preventDefault();
+      event.stopPropagation();
       const locToggle = document.getElementById('location-bar-toggle');
       if (locToggle) {
         locToggle.click();
@@ -408,6 +392,8 @@ function initSeraphInteractions() {
 
     // Visual Presets Tray Toggle (P)
     if (key === 'p') {
+      event.preventDefault();
+      event.stopPropagation();
       const presetToggle = document.getElementById('control-panel-toggle');
       if (presetToggle) {
         presetToggle.click();
@@ -418,6 +404,8 @@ function initSeraphInteractions() {
 
     // Strategic Defense Sector Cycle & Intercept Camera (Shift+K)
     if (event.key === 'K' || (key === 'k' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const sector = tacticalThreatGrid.cycleNextSector();
       if (sector) {
         showToast(
@@ -430,6 +418,8 @@ function initSeraphInteractions() {
 
     // Tactical Threat & Radar Grid Toggle (K)
     if (key === 'k') {
+      event.preventDefault();
+      event.stopPropagation();
       const active = tacticalThreatGrid.toggle();
       showToast(
         active
@@ -442,6 +432,8 @@ function initSeraphInteractions() {
 
     // Tactical Intercept & Range Vectoring Engine (Shift+V or I)
     if ((key === 'v' && event.shiftKey) || key === 'i') {
+      event.preventDefault();
+      event.stopPropagation();
       if (tacticalVectoring.activeSolution) {
         tacticalVectoring.clear();
         showToast('INTERCEPT VECTORING // CLEARED [Shift+V]');
@@ -497,6 +489,8 @@ function initSeraphInteractions() {
 
     // Live Doppler Storm Radar Toggle (R)
     if (key === 'r') {
+      event.preventDefault();
+      event.stopPropagation();
       const active = dopplerRadar.toggle(viewer);
       showToast(
         active
@@ -509,6 +503,8 @@ function initSeraphInteractions() {
 
     // GPS Jamming & Electronic Warfare Denial Layer (J)
     if (key === 'j') {
+      event.preventDefault();
+      event.stopPropagation();
       const active = gpsJammingLayer.toggle(viewer);
       showToast(
         active
@@ -521,6 +517,8 @@ function initSeraphInteractions() {
 
     // Ballistic & Hypersonic Trajectory Predictor (Shift+B)
     if (event.key === 'B' || (key === 'b' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const active = ballisticPredictor.toggle(viewer);
       showToast(
         active
@@ -533,6 +531,8 @@ function initSeraphInteractions() {
 
     // ATAK / CoT Tactical Data Link (B)
     if (key === 'b') {
+      event.preventDefault();
+      event.stopPropagation();
       const active = cotLayer.toggle(viewer);
       showToast(
         active
@@ -545,6 +545,8 @@ function initSeraphInteractions() {
 
     // Weapons-to-Target Assignment Battle Management (Shift+W)
     if (event.key === 'W' || (key === 'w' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const active = tacticalWta.toggle(viewer);
       showToast(
         active
@@ -557,6 +559,8 @@ function initSeraphInteractions() {
 
     // 3D Radar Horizon & Terrain Masking (Shift+M)
     if (event.key === 'M' || (key === 'm' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const active = terrainMasking.toggle(viewer);
       showToast(
         active
@@ -569,6 +573,8 @@ function initSeraphInteractions() {
 
     // Space Domain Awareness & Satellite Overflight Warning (Shift+O)
     if (event.key === 'O' || (key === 'o' && event.shiftKey)) {
+      event.preventDefault();
+      event.stopPropagation();
       const active = spaceDomainAwareness.toggle(viewer);
       showToast(
         active
@@ -581,6 +587,8 @@ function initSeraphInteractions() {
 
     // MIL-STD-2525D NATO Tactical Symbology (Y)
     if (key === 'y') {
+      event.preventDefault();
+      event.stopPropagation();
       const active = milStdSymbology.toggle(viewer);
       showToast(
         active
@@ -593,6 +601,8 @@ function initSeraphInteractions() {
 
     // Cycle Hotspot Cities Next (]) and Previous ([)
     if (event.key === ']' || event.key === '}') {
+      event.preventDefault();
+      event.stopPropagation();
       currentCityIdx = (currentCityIdx + 1) % CITY_HOTSPOTS.length;
       const target = CITY_HOTSPOTS[currentCityIdx];
       const pill = document.querySelector(
@@ -604,6 +614,8 @@ function initSeraphInteractions() {
     }
 
     if (event.key === '[' || event.key === '{') {
+      event.preventDefault();
+      event.stopPropagation();
       currentCityIdx =
         (currentCityIdx - 1 + CITY_HOTSPOTS.length) % CITY_HOTSPOTS.length;
       const target = CITY_HOTSPOTS[currentCityIdx];
@@ -617,6 +629,8 @@ function initSeraphInteractions() {
 
     // Camera Zoom In (+ or =)
     if (event.key === '+' || event.key === '=') {
+      event.preventDefault();
+      event.stopPropagation();
       if (viewer && !viewer.isDestroyed()) {
         const camera = viewer.camera;
         const height = camera.positionCartographic?.height || 5000;
@@ -628,6 +642,8 @@ function initSeraphInteractions() {
 
     // Camera Zoom Out (- or _)
     if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      event.stopPropagation();
       if (viewer && !viewer.isDestroyed()) {
         const camera = viewer.camera;
         const height = camera.positionCartographic?.height || 5000;
@@ -640,6 +656,7 @@ function initSeraphInteractions() {
     // Keyboard Shortcuts Cheatsheet (? or F1)
     if (event.key === '?' || event.key === 'F1') {
       event.preventDefault();
+      event.stopPropagation();
       showToast(
         'HOTKEYS: [1-5] DEFCON · [Space] SITREP · [V] Voice C2 · [T] FLIR · [N] NVG · [C] CRT · [Shift+B] Ballistic · [Shift+W] WTA · [Shift+M] Terrain Mask · [Shift+O] SDA · [Shift+V/I] Intercept · [Shift+K] Sectors · [K] Threat Grid · [R] Doppler · [J] EW/GPS · [B] CoT · [Y] NATO Frames · [M] Tour · [G] Globe · [Shift+T] Tilt · [Shift+N] North',
         9500,
@@ -651,6 +668,7 @@ function initSeraphInteractions() {
     if (event.key === 'ArrowUp') {
       if (viewer && !viewer.isDestroyed()) {
         event.preventDefault();
+        event.stopPropagation();
         const camera = viewer.camera;
         const dist = Math.max(
           100,
@@ -664,6 +682,7 @@ function initSeraphInteractions() {
     if (event.key === 'ArrowDown') {
       if (viewer && !viewer.isDestroyed()) {
         event.preventDefault();
+        event.stopPropagation();
         const camera = viewer.camera;
         const dist = Math.max(
           100,
@@ -677,6 +696,7 @@ function initSeraphInteractions() {
     if (event.key === 'ArrowLeft') {
       if (viewer && !viewer.isDestroyed()) {
         event.preventDefault();
+        event.stopPropagation();
         const camera = viewer.camera;
         const dist = Math.max(
           100,
@@ -690,6 +710,7 @@ function initSeraphInteractions() {
     if (event.key === 'ArrowRight') {
       if (viewer && !viewer.isDestroyed()) {
         event.preventDefault();
+        event.stopPropagation();
         const camera = viewer.camera;
         const dist = Math.max(
           100,

@@ -9,6 +9,7 @@
 import { tacticalSound } from './tacticalSound.js';
 import { threatMatrix } from './threatMatrix.js';
 import { STRATEGIC_SECTORS } from './tacticalThreatGrid.js';
+import { stopTacticalVoiceAudio } from './voice/localVoiceSession.js';
 
 export class TacticalSitrepEngine {
   constructor() {
@@ -437,6 +438,17 @@ export class TacticalSitrepEngine {
    * Run the briefing: Deliver broadcast-grade neural audio with tactical radio comms framing
    */
   async deliverBriefing() {
+    stopTacticalVoiceAudio();
+    if (typeof document !== 'undefined') {
+      document
+        .querySelectorAll('audio[data-gev-realtime-audio="true"]')
+        .forEach((el) => {
+          try {
+            el.pause();
+          } catch {}
+        });
+    }
+
     const sitrep = this.generateSitrep();
     this.stopBriefing();
 
@@ -465,6 +477,7 @@ export class TacticalSitrepEngine {
           const blob = await resp.blob();
           const audioUrl = URL.createObjectURL(blob);
           const audio = new Audio(audioUrl);
+          audio.dataset.seraphAudio = 'tactical-sitrep';
           this.activeAudio = audio;
 
           audio.onplay = () => {
