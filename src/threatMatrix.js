@@ -96,6 +96,33 @@ class ThreatMatrixEngine {
     }
   }
 
+  setDefcon(level) {
+    const raw = Number.parseInt(level, 10);
+    const parsed = Math.max(1, Math.min(5, Number.isNaN(raw) ? 4 : raw));
+    this.currentDefcon = parsed;
+    this._updateBadge(parsed);
+    if (parsed <= 2) {
+      tacticalSound.playAlertBeep?.();
+    } else {
+      tacticalSound.playRadioChirp?.();
+    }
+    const label = this.getDefconLabel(parsed);
+    const incident = {
+      level: `DEFCON ${parsed}`,
+      type: 'READINESS',
+      text: `Operational readiness state adjusted to DEFCON ${label}`,
+      source: 'C2_OPERATOR',
+    };
+    this.recentIncidents.unshift(incident);
+    if (this.recentIncidents.length > 30) this.recentIncidents.pop();
+    for (const cb of this.subscribers) {
+      try {
+        cb(incident);
+      } catch {}
+    }
+    return { level: parsed, label };
+  }
+
   _updateBadge(level = this.currentDefcon) {
     if (typeof document === 'undefined') return;
     const badge = document.getElementById('defcon-level-badge');

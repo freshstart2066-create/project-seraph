@@ -129,7 +129,10 @@ export function matchTacticalIntent(rawText) {
   }
   if (
     text.includes('weapon assignment') ||
+    text.includes('weapons to target') ||
+    text.includes('weapons-to-target') ||
     text.includes('wta') ||
+    text.includes('solve wta') ||
     text.includes('engage raid') ||
     text.includes('battle management') ||
     text.includes('intercept queue')
@@ -153,6 +156,7 @@ export function matchTacticalIntent(rawText) {
   }
   if (
     text.includes('satellite overflight') ||
+    text.includes('satellite passes') ||
     text.includes('space domain') ||
     text.includes('sda') ||
     text.includes('recon satellite') ||
@@ -489,10 +493,16 @@ export function createLocalVoiceSession({
       } else if (intent.type === 'tactical_tour') {
         window.__tacticalTour?.start?.();
       } else if (intent.type === 'action') {
-        await runAction(intent.action, intent.args || {});
+        if (typeof runAction === 'function') {
+          await runAction(intent.action, intent.args || {});
+        } else if (intent.action === 'set_visual_style') {
+          window.ProjectSeraph?.styleManager?.setStyle?.(intent.args?.style);
+        }
         await playTacticalVoiceAck(intent.spoken);
       } else if (intent.type === 'analyst') {
-        await runAction('analyst_query', { query: intent.query });
+        if (typeof runAction === 'function') {
+          await runAction('analyst_query', { query: intent.query });
+        }
         await playTacticalVoiceAck(intent.spoken);
       }
     } catch (err) {

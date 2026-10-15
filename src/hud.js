@@ -15,7 +15,7 @@ import { applicationServices } from './services/application.js';
  */
 
 import * as Cesium from 'cesium';
-import { forward as toMGRS } from 'mgrs';
+import { forward as toMGRS } from 'mgrs/dist/mgrs.esm.js';
 import { CITY_POIS } from './locations.js';
 import { composeLocalityTag } from './hudLocality.js';
 import {

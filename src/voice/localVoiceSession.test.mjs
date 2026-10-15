@@ -14,15 +14,20 @@ test('matchTacticalIntent correctly parses DEFCON commands', () => {
 
 test('matchTacticalIntent correctly parses tactical C2 commands', () => {
   assert.equal(matchTacticalIntent('give me a SITREP')?.type, 'sitrep');
+  assert.equal(matchTacticalIntent('Seraph, generate situation report')?.type, 'sitrep');
   assert.equal(matchTacticalIntent('vector intercept now')?.type, 'vector_intercept');
   assert.equal(matchTacticalIntent('scramble fighters')?.type, 'vector_intercept');
   assert.equal(matchTacticalIntent('scan threat grid')?.type, 'threat_grid');
   assert.equal(matchTacticalIntent('scan sector tokyo')?.sector, 'tokyo');
   assert.equal(matchTacticalIntent('start tactical tour')?.type, 'tactical_tour');
   assert.equal(matchTacticalIntent('simulate ballistic missile trajectory')?.type, 'ballistic_predictor');
+  assert.equal(matchTacticalIntent('Seraph, run ballistic trajectory')?.type, 'ballistic_predictor');
   assert.equal(matchTacticalIntent('calculate weapons to target assignment wta')?.type, 'wta_assignment');
+  assert.equal(matchTacticalIntent('Seraph, solve WTA / weapons to target')?.type, 'wta_assignment');
   assert.equal(matchTacticalIntent('scan terrain masking radar horizon')?.type, 'terrain_masking');
+  assert.equal(matchTacticalIntent('Seraph, show terrain masking / radar horizon')?.type, 'terrain_masking');
   assert.equal(matchTacticalIntent('satellite overflight warning')?.type, 'space_domain');
+  assert.equal(matchTacticalIntent('Seraph, monitor satellite passes / space domain')?.type, 'space_domain');
 });
 
 test('matchTacticalIntent correctly handles sensor filters and camera navigation', () => {
@@ -31,6 +36,18 @@ test('matchTacticalIntent correctly handles sensor filters and camera navigation
     action: 'set_visual_style',
     args: { style: 'thermal' },
     spoken: 'FLIR thermal imagery online.',
+  });
+  assert.deepEqual(matchTacticalIntent('Seraph, engage thermal vision'), {
+    type: 'action',
+    action: 'set_visual_style',
+    args: { style: 'thermal' },
+    spoken: 'FLIR thermal imagery online.',
+  });
+  assert.deepEqual(matchTacticalIntent('Seraph, engage night vision'), {
+    type: 'action',
+    action: 'set_visual_style',
+    args: { style: 'retro' },
+    spoken: 'Night surveillance filter active.',
   });
   assert.deepEqual(matchTacticalIntent('reset globe view'), {
     type: 'action',

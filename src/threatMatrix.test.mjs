@@ -139,3 +139,27 @@ test('ThreatMatrixEngine detects dark vessels transiting maritime chokepoints an
 
   threatMatrix.clearAnomalies();
 });
+
+test('ThreatMatrixEngine setDefcon allows operator manual escalation DEFCON 1 through 5', () => {
+  const c1 = threatMatrix.setDefcon(1);
+  assert.equal(c1.level, 1);
+  assert.equal(c1.label, '1 · COCKED PISTOL');
+  assert.equal(threatMatrix.currentDefcon, 1);
+
+  const c5 = threatMatrix.setDefcon(5);
+  assert.equal(c5.level, 5);
+  assert.equal(c5.label, '5 · FADE OUT');
+  assert.equal(threatMatrix.currentDefcon, 5);
+
+  const c3 = threatMatrix.setDefcon(3);
+  assert.equal(c3.level, 3);
+  assert.equal(c3.label, '3 · ROUND HOUSE');
+  assert.equal(threatMatrix.currentDefcon, 3);
+
+  // Clamping test
+  const cClampLow = threatMatrix.setDefcon(0);
+  assert.equal(cClampLow.level, 1);
+  const cClampHigh = threatMatrix.setDefcon(99);
+  assert.equal(cClampHigh.level, 5);
+});
+

@@ -22,14 +22,18 @@ if (typeof window !== 'undefined') {
   window.Cesium = Cesium;
 }
 
-const application = createStandaloneApplication({
-  googleApiKey: import.meta.env.GOOGLE_MAPS_API_KEY,
-  cesiumToken: import.meta.env.CESIUM_ION_TOKEN,
-  allowQaRegistration: import.meta.env.DEV,
-});
+const application =
+  typeof document !== 'undefined'
+    ? createStandaloneApplication({
+        googleApiKey: import.meta.env?.GOOGLE_MAPS_API_KEY,
+        cesiumToken: import.meta.env?.CESIUM_ION_TOKEN,
+        allowQaRegistration: import.meta.env?.DEV,
+      })
+    : null;
 
 let toastTimer = null;
 function showToast(text, duration = 2800) {
+  if (typeof document === 'undefined') return;
   const toast = document.getElementById('toast');
   if (toast) {
     toast.textContent = text;
@@ -54,6 +58,30 @@ const CITY_HOTSPOTS = [
 ];
 let currentCityIdx = 0;
 
+export function toggleShader(styleName, displayName = styleName.toUpperCase()) {
+  const sm =
+    window.ProjectSeraph?.styleManager ||
+    application.getComponents()?.controls?.styleManager;
+  if (sm) {
+    const current = sm.activeStyle;
+    const next = current === styleName ? 'normal' : styleName;
+    sm.setStyle(next);
+    tacticalSound.playRadioChirp?.();
+    showToast(
+      next === styleName
+        ? `VISUAL SENSOR // ${displayName} SHADER ACTIVE`
+        : 'VISUAL SENSOR // NORMAL SPECTRUM RESTORED',
+    );
+    return next;
+  }
+  const btn = document.querySelector(`.style-btn[data-style="${styleName}"]`);
+  if (btn) {
+    btn.click();
+    showToast(`VISUAL SENSOR // ${displayName} TOGGLED`);
+  }
+  return styleName;
+}
+
 // Expose global Project Seraph C4ISR interface immediately
 if (typeof window !== 'undefined') {
   window.ProjectSeraph = {
@@ -70,8 +98,15 @@ if (typeof window !== 'undefined') {
     tacticalWta,
     terrainMasking,
     spaceDomainAwareness,
+    threatMatrix,
+    toggleShader,
   };
   window.HeliosC2 = window.ProjectSeraph; // Legacy backward alias
+  window.__threatMatrix = threatMatrix;
+  window.__tacticalSitrep = tacticalSitrep;
+  window.__tacticalVectoring = tacticalVectoring;
+  window.__tacticalThreatGrid = tacticalThreatGrid;
+  window.__tacticalTour = tacticalTour;
 }
 
 /**
@@ -258,28 +293,96 @@ function initSeraphInteractions() {
       }
     }
 
-    // Camera Tilt (T)
-    if (key === 't') {
+    // DEFCON Operational Readiness State [1] through [5]
+    if (['1', '2', '3', '4', '5'].includes(event.key)) {
+      const level = Number.parseInt(event.key, 10);
+      const def = threatMatrix.setDefcon(level);
+      showToast(
+        `DEFCON STATUS ESCALATION: [DEFCON ${def.label}] [${event.key}]`,
+        3500,
+      );
+      return;
+    }
+
+    // AI Operational SITREP Briefing [Space] or [S]
+    if (event.code === 'Space' || event.key === ' ' || key === 's') {
+      event.preventDefault();
+      tacticalSitrep.deliverBriefing();
+      showToast('AI SITREP // TACTICAL INTELLIGENCE BRIEFING ACTIVE [Space/S]');
+      return;
+    }
+
+    // Toggle Operator Voice C2 Session (Local OmniVoice) [V]
+    if (key === 'v' && !event.shiftKey) {
+      const voiceBtn = document.getElementById('gev-voice-button');
+      if (voiceBtn) {
+        voiceBtn.click();
+        showToast('OMNIVOICE C2 // OPERATOR VOICE SESSION TOGGLED [V]');
+      } else if (window.__gevVoiceCommands) {
+        if (window.__gevVoiceCommands.session?.isActive?.()) {
+          window.__gevVoiceCommands.session.stop();
+          showToast('OMNIVOICE C2 // VOICE STANDBY [V]');
+        } else {
+          window.__gevVoiceCommands.session?.start?.({ pushToTalk: false });
+          showToast('OMNIVOICE C2 // VOICE ACTIVE [V]');
+        }
+      }
+      tacticalSound.playRadioChirp?.();
+      return;
+    }
+
+    // Toggle FLIR Thermal Multi-Spectral Post-Processing Shader [T]
+    if (key === 't' && !event.shiftKey) {
+      toggleShader('thermal', 'FLIR THERMAL [T]');
+      return;
+    }
+
+    // Camera Tilt (Shift+T)
+    if (event.key === 'T' || (key === 't' && event.shiftKey)) {
       const tiltBtn = document.getElementById('tilt-map-view');
       if (tiltBtn) {
         tiltBtn.click();
         const isTilted = tiltBtn.getAttribute('aria-pressed') === 'true';
         showToast(
           isTilted
-            ? 'CAMERA ANGLE: 45° OBLIQUE TILT [T]'
-            : 'CAMERA ANGLE: TOP-DOWN NADIR [T]',
+            ? 'CAMERA ANGLE: 45° OBLIQUE TILT [Shift+T]'
+            : 'CAMERA ANGLE: TOP-DOWN NADIR [Shift+T]',
         );
       }
       return;
     }
 
-    // Reset North (N)
-    if (key === 'n') {
+    // Toggle NVG Night Vision Phosphor Shader [N]
+    if (key === 'n' && !event.shiftKey) {
+      toggleShader('surveillance', 'NVG NIGHT VISION PHOSPHOR [N]');
+      return;
+    }
+
+    // Reset North (Shift+N)
+    if (event.key === 'N' || (key === 'n' && event.shiftKey)) {
       const northBtn = document.getElementById('north-up-view');
       if (northBtn) {
         northBtn.click();
-        showToast('COMPASS ALIGNED: NORTH-UP [0°]');
+        showToast('COMPASS ALIGNED: NORTH-UP [0°] [Shift+N]');
       }
+      return;
+    }
+
+    // Toggle Tactical CRT Scanline Post-Processing Shader [C]
+    if (key === 'c' && !event.shiftKey) {
+      toggleShader('retro', 'TACTICAL CRT SCANLINES [C]');
+      return;
+    }
+
+    // Space Domain Awareness - Satellite Recon Cones (Shift+C)
+    if (event.key === 'C' || (key === 'c' && event.shiftKey)) {
+      const active = satelliteCones.toggle(viewer);
+      showToast(
+        active
+          ? 'SDA ONLINE · SATELLITE RECON CONES PROJECTED [Shift+C]'
+          : 'SATELLITE CONES HIDDEN [Shift+C]',
+      );
+      tacticalSound.playSonarPing?.();
       return;
     }
 
@@ -337,11 +440,11 @@ function initSeraphInteractions() {
       return;
     }
 
-    // Tactical Intercept & Range Vectoring Engine (V)
-    if (key === 'v') {
+    // Tactical Intercept & Range Vectoring Engine (Shift+V or I)
+    if ((key === 'v' && event.shiftKey) || key === 'i') {
       if (tacticalVectoring.activeSolution) {
         tacticalVectoring.clear();
-        showToast('INTERCEPT VECTORING // CLEARED [V]');
+        showToast('INTERCEPT VECTORING // CLEARED [Shift+V]');
       } else {
         const sectors = tacticalThreatGrid.getSectors();
         const activeSec =
@@ -392,13 +495,6 @@ function initSeraphInteractions() {
       return;
     }
 
-    // AI Operational SITREP Briefing (S)
-    if (key === 's') {
-      tacticalSitrep.deliverBriefing();
-      showToast('AI SITREP // TACTICAL INTELLIGENCE BRIEFING ACTIVE [S]');
-      return;
-    }
-
     // Live Doppler Storm Radar Toggle (R)
     if (key === 'r') {
       const active = dopplerRadar.toggle(viewer);
@@ -420,18 +516,6 @@ function initSeraphInteractions() {
           : 'EW / GPS JAMMING LAYER STANDBY [J]',
       );
       tacticalSound.playAlertBeep?.();
-      return;
-    }
-
-    // Space Domain Awareness - Satellite Recon Cones (C)
-    if (key === 'c') {
-      const active = satelliteCones.toggle(viewer);
-      showToast(
-        active
-          ? 'SDA ONLINE · SATELLITE RECON CONES PROJECTED [C]'
-          : 'SATELLITE CONES HIDDEN [C]',
-      );
-      tacticalSound.playSonarPing?.();
       return;
     }
 
@@ -557,8 +641,8 @@ function initSeraphInteractions() {
     if (event.key === '?' || event.key === 'F1') {
       event.preventDefault();
       showToast(
-        'NAV: [N] North · [T] Tilt · [G] Globe · [M] Tour · [K] Threat Grid · [Shift+K] Sectors · [V] Vector Tape · [Shift+B] Ballistic BMEWS · [Shift+W] WTA Queue · [Shift+M] Terrain Mask · [Shift+O] Space SDA · [Y] NATO Symbology · [S] SITREP · [R] Doppler · [J] EW/GPS · [C] Sat Cones · [B] ATAK/CoT',
-        8500,
+        'HOTKEYS: [1-5] DEFCON · [Space] SITREP · [V] Voice C2 · [T] FLIR · [N] NVG · [C] CRT · [Shift+B] Ballistic · [Shift+W] WTA · [Shift+M] Terrain Mask · [Shift+O] SDA · [Shift+V/I] Intercept · [Shift+K] Sectors · [K] Threat Grid · [R] Doppler · [J] EW/GPS · [B] CoT · [Y] NATO Frames · [M] Tour · [G] Globe · [Shift+T] Tilt · [Shift+N] North',
+        9500,
       );
       return;
     }
@@ -629,12 +713,19 @@ if (typeof document !== 'undefined') {
 }
 
 // Start application runtime and connect 3D scene when ready
-application
-  .start()
+if (application) {
+  application
+    .start()
   .then(() => {
     // Initialize Project Seraph Tactical Threat & Radar Grid
     threatMatrix.init();
-    const viewer = application.getComponents().scene?.viewer;
+    const components = application.getComponents();
+    const viewer = components.scene?.viewer;
+    const styleManager = components.controls?.styleManager;
+    if (typeof window !== 'undefined') {
+      window.ProjectSeraph.viewer = viewer;
+      window.ProjectSeraph.styleManager = styleManager;
+    }
     if (viewer) {
       tacticalThreatGrid.init(viewer);
       dopplerRadar.init(viewer);
@@ -700,5 +791,6 @@ application
       loadingScreen?.classList.add('hidden');
     }, 2500);
   });
+}
 
 export { application };
